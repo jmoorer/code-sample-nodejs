@@ -29,12 +29,16 @@ exports.handler = async (event) => {
 
   const params = {
     TableName: tableName,
-    KeyConditionExpression: "schoolId = :id",
+    KeyConditionExpression: "schoolId = :schoolId",
     ExpressionAttributeValues: {
-      ":id": event.schoolId,
+      ":schoolId": event.schoolId,
     },
     Limit: 5,
   };
+  if (event.studentId) {
+    params.KeyConditionExpression = `${params.KeyConditionExpression} AND studentId = :studentId`;
+    params.ExpressionAttributeValues[":studentId"] = event.studentId;
+  }
   //use gsi to search
   if (event.studentLastName) {
     params.IndexName = "studentLastNameGsi";

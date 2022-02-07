@@ -1,37 +1,39 @@
 // You shouldn't need to touch this file to complete the code sample but feel free to do so
-const AWS = require('aws-sdk');
+const AWS = require("aws-sdk");
 
 const port = 8000;
 
 const dynamoOptions = {
   endpoint: new AWS.Endpoint(`http://localhost:${port}`),
-  accessKeyId: 'fakeKeyId',
-  secretAccessKey: 'fakeSecretAccessKey',
-  region: 'us-west-2'
+  accessKeyId: "fakeKeyId",
+  secretAccessKey: "fakeSecretAccessKey",
+  region: "us-west-2",
 };
 const db = new AWS.DynamoDB(dynamoOptions);
 
-const spawn = require('child_process').spawn;
-const path = require('path');
+const spawn = require("child_process").spawn;
+const path = require("path");
 
 let dbLocalProcess = null;
 
 exports.startLocalDynamoDB = () => {
-  dbLocalProcess = spawn('java',
+  dbLocalProcess = spawn(
+    "java",
     [
-      '-Djava.library.path=./DynamoDBLocal_lib',
-      '-jar',
-      './DynamoDBLocal.jar',
-      '-port',
+      "-Djava.library.path=./DynamoDBLocal_lib",
+      "-jar",
+      "./DynamoDBLocal.jar",
+      "-port",
       `${port}`,
-      '-sharedDb'
+      "-sharedDb",
     ],
     {
-      'stdio': 'inherit',
-      'cwd': path.join(__dirname, 'dynamodb_local_latest_20191209')
-    });
+      stdio: "inherit",
+      cwd: path.join(__dirname, "dynamodb_local_latest_20191209"),
+    }
+  );
 
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     setTimeout(resolve, 1000);
   });
 };
@@ -48,7 +50,12 @@ const tableExists = async (tableName) => {
   return tables.TableNames.indexOf(tableName) > -1;
 };
 
-exports.createTable = async (tableName, keySchema, attributeDefinitions, globalSecondaryIndexes) => {
+exports.createTable = async (
+  tableName,
+  keySchema,
+  attributeDefinitions,
+  globalSecondaryIndexes
+) => {
   if (await tableExists(tableName)) {
     await deleteTable(tableName);
   }
@@ -58,30 +65,30 @@ exports.createTable = async (tableName, keySchema, attributeDefinitions, globalS
     KeySchema: keySchema,
     ProvisionedThroughput: {
       ReadCapacityUnits: 5,
-      WriteCapacityUnits: 5
+      WriteCapacityUnits: 5,
     },
-    TableName: tableName
+    TableName: tableName,
   };
   if (globalSecondaryIndexes && globalSecondaryIndexes.length) {
-    attributes.GlobalSecondaryIndexes = globalSecondaryIndexes
+    attributes.GlobalSecondaryIndexes = globalSecondaryIndexes;
   }
   return db.createTable(attributes).promise();
 };
 
 exports.buildGlobalSecondaryIndex = (indexName, keySchema) => {
-  return  {
+  return {
     IndexName: indexName,
     KeySchema: keySchema,
     ProvisionedThroughput: {
       ReadCapacityUnits: 1,
-      WriteCapacityUnits: 1
+      WriteCapacityUnits: 1,
     },
     Projection: {
-      ProjectionType: 'ALL'
-    }
+      ProjectionType: "ALL",
+    },
   };
 };
 
 const deleteTable = (tableName) => {
-  return db.deleteTable({TableName: tableName}).promise();
+  return db.deleteTable({ TableName: tableName }).promise();
 };
